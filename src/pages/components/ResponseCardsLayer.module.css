@@ -1,8 +1,15 @@
 .cardShell {
   position: absolute;
   z-index: 30;
-  width: min(420px, calc(100vw - 48px));
   color: white;
+}
+
+.expandedShell {
+  width: min(720px, calc(100vw - 48px));
+}
+
+.collapsedShell {
+  width: min(420px, calc(100vw - 48px));
 }
 
 .cardFrame {
@@ -48,4 +55,43 @@
   font-size: 0.875rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.plainAnswer,
+.latexAnswer {
+  max-height: min(38vh, 320px);
+  overflow: auto;
+  padding: 0.75rem 0.9rem;
+}
+
+.plainAnswer {
+  color: #f8fafc;
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.latexAnswer {
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+.plainAnswer::-webkit-scrollbar,
+.latexAnswer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.plainAnswer::-webkit-scrollbar-track,
+.latexAnswer::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.55);
+  border-radius: 999px;
+}
+
+.plainAnswer::-webkit-scrollbar-thumb,
+.latexAnswer::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.75);
+  border-radius: 999px;
 }

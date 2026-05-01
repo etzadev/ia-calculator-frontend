@@ -74,8 +74,8 @@ body,
 }
 
 .latex-content {
-  width: calc(100vw - 24px);
-  max-width: calc(100vw - 24px);
+  width: 100%;
+  max-width: 100%;
   max-height: min(42vh, 360px);
   overflow: auto;
   overflow-wrap: anywhere;
