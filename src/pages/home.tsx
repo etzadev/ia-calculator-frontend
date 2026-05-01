@@ -21,6 +21,8 @@ const RESPONSE_BOX_MARGIN = 24;
 const CALCULATE_COOLDOWN_MS = 3500;
 const STORAGE_KEY = "ia-calculator-workspace-v1";
 const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
+const BACKEND_HEALTH_TIMEOUT_MS = 8000;
+const BACKEND_OFFLINE_FAILURES = 2;
 
 const getReadableTextColor = (backgroundColor: string) => {
   const hexColor = backgroundColor.replace("#", "");
@@ -46,6 +48,7 @@ export default function Home() {
   const selectionRef = useRef<SelectionBox | null>(null);
   const selectedAreaRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const persistTimeoutRef = useRef<number | null>(null);
+  const backendHealthFailuresRef = useRef(0);
   const [isDrawing, setIsDrawing] = useState(false);
   const [toolMode, setToolMode] = useState<ToolMode>("draw");
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -700,10 +703,19 @@ export default function Home() {
       }
 
       try {
-        await axios.get(`${import.meta.env.VITE_API_URL}/`, { timeout: 2500 });
-        if (isMounted) setBackendStatus("online");
+        await axios.get(API_BASE_URL, {
+          timeout: BACKEND_HEALTH_TIMEOUT_MS,
+          headers: { "Cache-Control": "no-cache" },
+        });
+        backendHealthFailuresRef.current = 0;
+        if (isMounted) {
+          setBackendStatus("online");
+        }
       } catch {
-        if (isMounted) setBackendStatus("offline");
+        backendHealthFailuresRef.current += 1;
+        if (isMounted && backendHealthFailuresRef.current >= BACKEND_OFFLINE_FAILURES) {
+          setBackendStatus("offline");
+        }
       }
     };
 
@@ -1080,6 +1092,7 @@ export default function Home() {
         });
 
         const resp = await response.data;
+        backendHealthFailuresRef.current = 0;
         setBackendStatus("online");
 
         if (resp.status !== "success" || !Array.isArray(resp.data)) {
