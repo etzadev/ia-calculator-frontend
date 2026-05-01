@@ -20,6 +20,7 @@ const GRAPH_PADDING = 28;
 const RESPONSE_BOX_MARGIN = 24;
 const CALCULATE_COOLDOWN_MS = 3500;
 const STORAGE_KEY = "ia-calculator-workspace-v1";
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
 
 const getReadableTextColor = (backgroundColor: string) => {
   const hexColor = backgroundColor.replace("#", "");
@@ -1070,7 +1071,7 @@ export default function Home() {
       try {
         const response = await axios({
           method: "POST",
-          url: `${import.meta.env.VITE_API_URL}/calculate`,
+          url: `${API_BASE_URL}/calculate`,
           data: {
             image: getCalculationImage(canvas),
             dict_of_vars: dictOfVars,
@@ -1146,13 +1147,16 @@ export default function Home() {
       } catch (error) {
         const isNetworkError = axios.isAxiosError(error) && !error.response;
         setBackendStatus(isNetworkError ? "offline" : "online");
+        const backendDetail = axios.isAxiosError(error) ? error.response?.data?.detail : null;
         const backendMessage =
-          axios.isAxiosError(error) && typeof error.response?.data?.detail === "string"
-            ? error.response.data.detail
-            : null;
+          typeof backendDetail === "string"
+            ? backendDetail
+            : backendDetail
+              ? JSON.stringify(backendDetail)
+              : null;
         setApiError(
           isNetworkError
-            ? "No se pudo conectar con el backend en 127.0.0.1:8000. Inicia el servidor y vuelve a calcular."
+            ? `No se pudo conectar con el backend en ${API_BASE_URL}. Revisa que el servicio este activo.`
             : backendMessage ?? "Ocurrio un error al calcular. Revisa la respuesta del backend."
         );
       } finally {
