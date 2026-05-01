@@ -31,7 +31,7 @@ export function ResponseCardsLayer({
           onStop={(_, data) => onMoveCard(card.id, clampPosition({ x: data.x, y: data.y }))}
         >
           <div className={styles.cardShell}>
-            <div className={styles.cardFrame}>
+            <div className={`${styles.cardFrame} ${card.pinned ? styles.pinned : ""}`}>
               <div className={styles.cardToolbar}>
                 <button
                   className={styles.cardButton}

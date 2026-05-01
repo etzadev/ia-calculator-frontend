@@ -1,7 +1,7 @@
 .cardShell {
   position: absolute;
   z-index: 30;
-  max-width: calc(100vw - 24px);
+  width: min(420px, calc(100vw - 48px));
   color: white;
 }
 
@@ -35,8 +35,13 @@
   color: white;
 }
 
+.pinned {
+  border-color: rgba(110, 231, 183, 0.35);
+  box-shadow: 0 20px 45px rgba(16, 185, 129, 0.14);
+}
+
 .collapsedText {
-  max-width: calc(100vw - 24px);
+  max-width: 100%;
   overflow: hidden;
   padding: 0.5rem 0.75rem;
   color: rgba(255, 255, 255, 0.85);

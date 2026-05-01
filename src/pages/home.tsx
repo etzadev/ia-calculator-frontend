@@ -18,6 +18,9 @@ const CANVAS_BACKGROUND = "#030119";
 const GRAPH_SCALE = 24;
 const GRAPH_PADDING = 28;
 const RESPONSE_BOX_MARGIN = 24;
+const RESPONSE_CARD_WIDTH = 420;
+const RESPONSE_CARD_HEIGHT = 96;
+const RESPONSE_CARD_GAP = 14;
 const CALCULATE_COOLDOWN_MS = 3500;
 const STORAGE_KEY = "ia-calculator-workspace-v1";
 const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/, "");
@@ -164,10 +167,61 @@ export default function Home() {
     };
   };
 
-  const clampLatexPosition = (position: Point) => ({
-    x: RESPONSE_BOX_MARGIN / 2,
-    y: Math.max(96, Math.min(position.y, window.innerHeight - 120)),
-  });
+  const clampLatexPosition = (position: Point) => {
+    const maxX = Math.max(RESPONSE_BOX_MARGIN, window.innerWidth - RESPONSE_CARD_WIDTH - RESPONSE_BOX_MARGIN);
+    const maxY = Math.max(96, window.innerHeight - RESPONSE_CARD_HEIGHT - RESPONSE_BOX_MARGIN);
+
+    return {
+      x: Math.max(RESPONSE_BOX_MARGIN, Math.min(position.x, maxX)),
+      y: Math.max(96, Math.min(position.y, maxY)),
+    };
+  };
+
+  const getResponseCardPosition = (
+    drawingBounds: { minX: number; minY: number; maxX: number; maxY: number; hasInk: boolean },
+    index: number,
+    total: number
+  ) => {
+    const stackHeight = total * RESPONSE_CARD_HEIGHT + Math.max(0, total - 1) * RESPONSE_CARD_GAP;
+    const yOffset = index * (RESPONSE_CARD_HEIGHT + RESPONSE_CARD_GAP);
+
+    if (!drawingBounds.hasInk) {
+      return clampLatexPosition({
+        x: window.innerWidth - RESPONSE_CARD_WIDTH - RESPONSE_BOX_MARGIN,
+        y: 120 + yOffset,
+      });
+    }
+
+    const hasRightRoom = drawingBounds.maxX + RESPONSE_BOX_MARGIN + RESPONSE_CARD_WIDTH < window.innerWidth;
+    const hasBottomRoom = drawingBounds.maxY + RESPONSE_BOX_MARGIN + stackHeight < window.innerHeight;
+    const hasTopRoom = drawingBounds.minY - RESPONSE_BOX_MARGIN - stackHeight > 96;
+
+    if (hasRightRoom) {
+      return clampLatexPosition({
+        x: drawingBounds.maxX + RESPONSE_BOX_MARGIN,
+        y: drawingBounds.minY + yOffset,
+      });
+    }
+
+    if (hasBottomRoom) {
+      return clampLatexPosition({
+        x: Math.max(RESPONSE_BOX_MARGIN, drawingBounds.minX),
+        y: drawingBounds.maxY + RESPONSE_BOX_MARGIN + yOffset,
+      });
+    }
+
+    if (hasTopRoom) {
+      return clampLatexPosition({
+        x: Math.max(RESPONSE_BOX_MARGIN, drawingBounds.minX),
+        y: drawingBounds.minY - RESPONSE_BOX_MARGIN - stackHeight + yOffset,
+      });
+    }
+
+    return clampLatexPosition({
+      x: window.innerWidth - RESPONSE_CARD_WIDTH - RESPONSE_BOX_MARGIN,
+      y: 120 + yOffset,
+    });
+  };
 
   const clearSelectionArea = () => {
     selectionRef.current = null;
@@ -1134,8 +1188,7 @@ export default function Home() {
         }
 
         const hasInk = maxX > 0 && maxY > 0;
-        const centerX = hasInk ? (minX + maxX) / 2 : canvas.width / 2;
-        const centerY = hasInk ? (minY + maxY) / 2 : canvas.height / 2;
+        const drawingBounds = { minX, minY, maxX, maxY, hasInk };
 
         setTimeout(() => {
           setResponseCards((currentCards) => [
@@ -1144,10 +1197,7 @@ export default function Home() {
               id: createElementId(),
               latex: `\\(\\LARGE{\\text{${data.expr}} = ${data.result}}\\)`,
               text: `${data.expr} = ${data.result}`,
-              position: clampLatexPosition({
-                x: centerX,
-                y: centerY + index * 18,
-              }),
+              position: getResponseCardPosition(drawingBounds, index, resp.data.length),
               pinned: false,
               collapsed: false,
             })),
